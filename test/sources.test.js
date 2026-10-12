@@ -139,7 +139,7 @@ before(async () => {
     }
     if (req.headers.authorization !== "Bearer anon") {
       res.writeHead(401, {
-        "www-authenticate": `Bearer realm="http://${registry}/token",service="test",scope="repository:team/app:pull"`,
+        "www-authenticate": `Bearer realm="http://${registry}/token",service="test",scope="aws"`,
       });
       res.end();
       return;

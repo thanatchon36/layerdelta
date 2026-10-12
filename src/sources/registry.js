@@ -114,7 +114,9 @@ class RegistryClient {
   async fetchToken(challenge) {
     const url = new URL(challenge.realm);
     if (challenge.service) url.searchParams.set("service", challenge.service);
-    url.searchParams.set("scope", challenge.scope ?? `repository:${this.ref.repository}:pull`);
+    // Ask for pull access to this repository, as docker does. The challenge's own scope can be
+    // something else entirely (ECR Public sends scope="aws").
+    url.searchParams.set("scope", `repository:${this.ref.repository}:pull`);
     const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
     if (!response.ok) {
       await response.body?.cancel();
