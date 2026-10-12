@@ -1,0 +1,30 @@
+{
+  "name": "layerdelta",
+  "version": "0.1.0",
+  "description": "See why your container image got bigger: compare two images file by file.",
+  "keywords": ["docker", "oci", "container", "image", "size", "diff", "layers", "ci"],
+  "homepage": "https://github.com/thanatchon36/layerdelta#readme",
+  "bugs": "https://github.com/thanatchon36/layerdelta/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thanatchon36/layerdelta.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "layerdelta": "bin/layerdelta.js"
+  },
+  "files": ["bin", "src"],
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "lint": "biome ci --error-on-warnings . && tsc"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2"
+  }
+}
