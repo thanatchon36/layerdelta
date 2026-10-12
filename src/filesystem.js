@@ -54,7 +54,7 @@ export function buildFilesystem(layers) {
       current = current ? `${current}/${part}` : part;
       const children = /** @type {Map<string, Node>} */ (node.children);
       let next = children.get(part);
-      if (!next || !next.children) {
+      if (!next?.children) {
         if (layer === undefined) return null;
         if (next) discard(next, current, layer, "replaced");
         next = dirNode(layer);
@@ -74,7 +74,8 @@ export function buildFilesystem(layers) {
       const dir = directory(parent);
       if (!dir?.children) continue;
       if (name === OPAQUE) {
-        for (const [child, node] of dir.children) discard(node, parent ? `${parent}/${child}` : child, layer, "deleted");
+        for (const [child, node] of dir.children)
+          discard(node, parent ? `${parent}/${child}` : child, layer, "deleted");
         dir.children.clear();
       } else {
         const target = name.slice(WHITEOUT.length);

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { compose, Readable } from "node:stream";
+import { pipeline, Readable } from "node:stream";
 import zlib from "node:zlib";
 import { normalizePath, tarEntries } from "./tar.js";
 
@@ -60,12 +60,18 @@ async function decompress(source) {
       }
     })(),
   );
-  if (first[0] === 0x1f && first[1] === 0x8b) return compose(replay, zlib.createGunzip());
+  /** @param {import("node:stream").Transform} decoder */
+  const through = (decoder) => {
+    // pipeline destroys the decoder with the source's error, so consumers see read failures.
+    pipeline(replay, decoder, () => {});
+    return decoder;
+  };
+  if (first[0] === 0x1f && first[1] === 0x8b) return through(zlib.createGunzip());
   if (first.length >= 4 && first.readUInt32LE(0) === 0xfd2fb528) {
     if (typeof zlib.createZstdDecompress !== "function") {
       throw new Error(`this layer is zstd-compressed, which needs Node.js 22.15 or newer (running ${process.version})`);
     }
-    return compose(replay, zlib.createZstdDecompress());
+    return through(zlib.createZstdDecompress());
   }
   return replay;
 }

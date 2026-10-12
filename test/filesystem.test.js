@@ -28,10 +28,7 @@ test("whiteouts delete files and whole directories from lower layers", () => {
 });
 
 test("opaque whiteouts hide lower content but not files from the same layer, wherever the marker is", () => {
-  const fs = buildFilesystem([
-    [file("data/old", 7)],
-    [file("data/new", 3), file("data/.wh..wh..opq", 0)],
-  ]);
+  const fs = buildFilesystem([[file("data/old", 7)], [file("data/new", 3), file("data/.wh..wh..opq", 0)]]);
   assert.deepEqual([...fs.files.keys()], ["data/new"]);
   assert.deepEqual(
     fs.wasted.map((w) => [w.path, w.how]),

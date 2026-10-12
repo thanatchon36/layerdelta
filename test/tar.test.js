@@ -80,7 +80,13 @@ test("indexTarFile finds file offsets by reading headers only", async () => {
   const { dir, cleanup } = await tempDir();
   try {
     const file = join(dir, "a.tar");
-    await writeFile(file, makeTar([{ name: "x/", type: "dir" }, { name: "x/hello", content: "hello world" }]));
+    await writeFile(
+      file,
+      makeTar([
+        { name: "x/", type: "dir" },
+        { name: "x/hello", content: "hello world" },
+      ]),
+    );
     const handle = await open(file);
     const index = await indexTarFile(handle);
     const where = index.get("x/hello");

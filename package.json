@@ -2,7 +2,16 @@
   "name": "layerdelta",
   "version": "0.1.0",
   "description": "See why your container image got bigger: compare two images file by file.",
-  "keywords": ["docker", "oci", "container", "image", "size", "diff", "layers", "ci"],
+  "keywords": [
+    "docker",
+    "oci",
+    "container",
+    "image",
+    "size",
+    "diff",
+    "layers",
+    "ci"
+  ],
   "homepage": "https://github.com/thanatchon36/layerdelta#readme",
   "bugs": "https://github.com/thanatchon36/layerdelta/issues",
   "repository": {
@@ -14,7 +23,10 @@
   "bin": {
     "layerdelta": "bin/layerdelta.js"
   },
-  "files": ["bin", "src"],
+  "files": [
+    "bin",
+    "src"
+  ],
   "engines": {
     "node": ">=22.15"
   },
