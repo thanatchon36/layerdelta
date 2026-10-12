@@ -142,6 +142,12 @@ test("comparing an image with itself reports no change", async () => {
   assert.match(stdout, /files\s+4\s+4\s+no change/);
 });
 
+test("waste the before image already had is summarized, not listed", async () => {
+  const { stdout } = await run([join(dir, "v2.tar"), join(dir, "v2.tar")]);
+  assert.match(stdout, /4\.5 MB {2}in 1 place inherited from layers shared with before/);
+  assert.doesNotMatch(stdout, /root\/\.cache\/pip\/http\//);
+});
+
 test("usage errors exit with status 2 and say what is wrong", async () => {
   assert.deepEqual(
     [await run([])].map((r) => [r.code, /expected two images, got 0/.test(r.stderr)]),

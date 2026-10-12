@@ -69,7 +69,7 @@ function treeLines(c, style) {
   const deltas = c.tree.map((row) => formatDelta(row.delta));
   const width = Math.max(...deltas.map((d) => d.length));
   const names = c.tree.map((row) => `${"  ".repeat(row.depth)}${row.name}`);
-  const nameWidth = Math.min(64, Math.max(...names.map((n) => n.length)));
+  const nameWidth = Math.min(44, Math.max(...names.map((n) => n.length)));
   return c.tree.map((row, i) => {
     const delta = deltas[i].padStart(width);
     const colored = row.delta > 0 ? style.red(delta) : row.delta < 0 ? style.green(delta) : delta;
@@ -93,6 +93,25 @@ function layerCommand(c, index) {
 const MIN_WASTED = 1_000_000;
 const MIN_CACHE = 1_000_000;
 
+/**
+ * New waste is listed; waste that before already had (both layers shared) is one summary line,
+ * since it says nothing about this change.
+ * @param {Comparison} c
+ */
+function wastedToShow(c) {
+  const fresh = c.wasted.filter((w) => !w.inherited);
+  const old = c.wasted.filter((w) => w.inherited);
+  return {
+    shown: fresh.filter((w) => w.size >= MIN_WASTED).slice(0, 8),
+    inherited: old.reduce((acc, w) => ({ size: acc.size + w.size, places: acc.places + 1 }), { size: 0, places: 0 }),
+  };
+}
+
+/** @param {{ size: number, places: number }} inherited */
+function inheritedText({ places }) {
+  return `in ${places} ${places === 1 ? "place" : "places"} inherited from layers shared with before (details in --format json)`;
+}
+
 /** @param {Comparison} c @param {Budget} budget @param {Style} [style] */
 export function renderText(c, budget, style = PLAIN) {
   const out = [];
@@ -109,18 +128,20 @@ export function renderText(c, budget, style = PLAIN) {
   out.push(...table(summaryRows(c), ["l", "r", "r", "r"]), "");
   out.push(style.bold("Where the size changed"), ...treeLines(c, style));
 
-  const wasted = c.wasted.filter((w) => w.size >= MIN_WASTED).slice(0, 8);
-  if (wasted.length) {
+  const { shown: wasted, inherited } = wastedToShow(c);
+  if (wasted.length || inherited.size) {
     out.push("", style.bold("Wasted in after: bytes kept in a layer but hidden by a later one"));
-    const width = Math.max(...wasted.map((w) => formatBytes(w.size).length));
+    const width = Math.max(...[...wasted.map((w) => w.size), inherited.size].map((size) => formatBytes(size).length));
     for (const w of wasted) {
       const files = w.files === 1 ? "1 file" : `${formatCount(w.files)} files`;
       out.push(
-        `  ${formatBytes(w.size).padStart(width)}  ${w.files === 1 ? w.path : `${w.path}/`}  ${style.dim(w.inherited ? `${files}, also in before` : files)}`,
+        `  ${formatBytes(w.size).padStart(width)}  ${w.files === 1 ? w.path : `${w.path}/`}  ${style.dim(files)}`,
         style.dim(`  ${" ".repeat(width)}  ${"added".padEnd(8)} layer ${w.addedIn}  ${layerCommand(c, w.addedIn)}`),
         style.dim(`  ${" ".repeat(width)}  ${w.how.padEnd(8)} layer ${w.removedIn}  ${layerCommand(c, w.removedIn)}`),
       );
     }
+    if (inherited.size)
+      out.push(style.dim(`  ${formatBytes(inherited.size).padStart(width)}  ${inheritedText(inherited)}`));
   }
 
   const caches = c.caches.filter((cache) => cache.size >= MIN_CACHE);
@@ -178,14 +199,15 @@ export function renderMarkdown(c, budget) {
   for (const row of rows.slice(1)) out.push(`| ${row.join(" | ")} |`);
   out.push("", "**Where the size changed**", "", "```text", ...treeLines(c, PLAIN), "```");
 
-  const wasted = c.wasted.filter((w) => w.size >= MIN_WASTED).slice(0, 8);
-  if (wasted.length) {
+  const { shown: wasted, inherited } = wastedToShow(c);
+  if (wasted.length || inherited.size) {
     out.push("", "**Wasted in after** (bytes kept in a layer but hidden by a later one)", "");
     for (const w of wasted) {
       out.push(
-        `- ${formatBytes(w.size)} in ${code(w.files === 1 ? w.path : `${w.path}/`)} (${w.files === 1 ? "1 file" : `${formatCount(w.files)} files`}): added by layer ${w.addedIn} (${code(layerCommand(c, w.addedIn))}), ${w.how} by layer ${w.removedIn} (${code(layerCommand(c, w.removedIn))})${w.inherited ? ", also in before" : ""}`,
+        `- ${formatBytes(w.size)} in ${code(w.files === 1 ? w.path : `${w.path}/`)} (${w.files === 1 ? "1 file" : `${formatCount(w.files)} files`}): added by layer ${w.addedIn} (${code(layerCommand(c, w.addedIn))}), ${w.how} by layer ${w.removedIn} (${code(layerCommand(c, w.removedIn))})`,
       );
     }
+    if (inherited.size) out.push(`- ${formatBytes(inherited.size)} ${inheritedText(inherited)}`);
   }
   const caches = c.caches.filter((cache) => cache.size >= MIN_CACHE);
   if (caches.length) {
