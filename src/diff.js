@@ -233,6 +233,8 @@ export function compare(before, after) {
       ...group,
       addedIn: group.addedIn + 1,
       removedIn: group.removedIn + 1,
+      // Both layers are shared, so before ships the same hidden bytes.
+      inherited: group.removedIn < shared,
     })),
     caches: findCaches(after.fs.files).map((cache) => ({ ...cache, before: beforeCaches.get(cache.path) ?? 0 })),
   };

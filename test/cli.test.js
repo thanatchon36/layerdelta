@@ -107,6 +107,7 @@ test("json report has stable fields for scripts", async () => {
     addedIn: 2,
     removedIn: 3,
     how: "deleted",
+    inherited: false,
   });
 });
 

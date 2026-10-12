@@ -1,0 +1,8 @@
+FROM python:3.13-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl
+COPY requirements-v2.txt requirements.txt
+RUN pip install -r requirements.txt
+RUN rm -rf /root/.cache/pip
+COPY app.py .
+CMD ["python", "app.py"]

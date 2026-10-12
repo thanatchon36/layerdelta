@@ -116,7 +116,7 @@ export function renderText(c, budget, style = PLAIN) {
     for (const w of wasted) {
       const files = w.files === 1 ? "1 file" : `${formatCount(w.files)} files`;
       out.push(
-        `  ${formatBytes(w.size).padStart(width)}  ${w.files === 1 ? w.path : `${w.path}/`}  ${style.dim(files)}`,
+        `  ${formatBytes(w.size).padStart(width)}  ${w.files === 1 ? w.path : `${w.path}/`}  ${style.dim(w.inherited ? `${files}, also in before` : files)}`,
         style.dim(`  ${" ".repeat(width)}  ${"added".padEnd(8)} layer ${w.addedIn}  ${layerCommand(c, w.addedIn)}`),
         style.dim(`  ${" ".repeat(width)}  ${w.how.padEnd(8)} layer ${w.removedIn}  ${layerCommand(c, w.removedIn)}`),
       );
@@ -183,7 +183,7 @@ export function renderMarkdown(c, budget) {
     out.push("", "**Wasted in after** (bytes kept in a layer but hidden by a later one)", "");
     for (const w of wasted) {
       out.push(
-        `- ${formatBytes(w.size)} in ${code(w.files === 1 ? w.path : `${w.path}/`)} (${w.files === 1 ? "1 file" : `${formatCount(w.files)} files`}): added by layer ${w.addedIn} (${code(layerCommand(c, w.addedIn))}), ${w.how} by layer ${w.removedIn} (${code(layerCommand(c, w.removedIn))})`,
+        `- ${formatBytes(w.size)} in ${code(w.files === 1 ? w.path : `${w.path}/`)} (${w.files === 1 ? "1 file" : `${formatCount(w.files)} files`}): added by layer ${w.addedIn} (${code(layerCommand(c, w.addedIn))}), ${w.how} by layer ${w.removedIn} (${code(layerCommand(c, w.removedIn))})${w.inherited ? ", also in before" : ""}`,
       );
     }
   }

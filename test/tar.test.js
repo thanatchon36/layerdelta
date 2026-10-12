@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { open, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
-import { gzipSync } from "node:zlib";
+import zlib, { gzipSync } from "node:zlib";
 import { readLayer } from "../src/layer.js";
 import { indexTarFile, tarEntries } from "../src/tar.js";
 import { chunked, makeTar, sha256, tempDir } from "./helpers.js";
@@ -98,4 +98,11 @@ test("indexTarFile finds file offsets by reading headers only", async () => {
   } finally {
     await cleanup();
   }
+});
+
+test("readLayer handles zstd layers", async (t) => {
+  if (typeof zlib.zstdCompressSync !== "function") return t.skip("this Node.js has no zstd");
+  const tar = makeTar([{ name: "z", size: 5 }]);
+  const zst = zlib.zstdCompressSync(tar);
+  assert.deepEqual(await readLayer(chunked(zst, 50), sha256(zst)), [{ path: "z", type: "file", size: 5 }]);
 });
