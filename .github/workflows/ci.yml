@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["22", "24", "26"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  example:
+    # Builds the README example with Docker and compares the two images, as a user would in CI.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Build example images
+        working-directory: examples/report-service
+        run: |
+          docker build --platform linux/amd64 -f Dockerfile.v1 -t layerdelta-example:v1 .
+          docker build --platform linux/amd64 -f Dockerfile.v2 -t layerdelta-example:v2 .
+      - name: Compare
+        run: |
+          node bin/layerdelta.js docker-daemon:layerdelta-example:v1 docker-daemon:layerdelta-example:v2 \
+            --format markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Budget check fails when the image grows too much
+        run: |
+          status=0
+          node bin/layerdelta.js docker-daemon:layerdelta-example:v1 docker-daemon:layerdelta-example:v2 \
+            --fail-over 50MB > /dev/null || status=$?
+          test "$status" -eq 1
